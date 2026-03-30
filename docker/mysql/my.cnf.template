@@ -1,0 +1,75 @@
+# MySQL Configuration Template for HoneStay
+[mysqld]
+# Basic Settings
+user = mysql
+pid-file = /var/run/mysqld/mysqld.pid
+socket = /var/run/mysqld/mysqld.sock
+port = 3306
+datadir = /var/lib/mysql
+
+# Character Set
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+init-connect = 'SET NAMES utf8mb4'
+
+# Connection Settings
+max_connections = ${MYSQL_MAX_CONNECTIONS}
+max_connect_errors = 10000
+max_allowed_packet = 256M
+interactive_timeout = 28800
+wait_timeout = 28800
+
+# Buffer Settings
+innodb_buffer_pool_size = ${MYSQL_INNODB_BUFFER_POOL_SIZE}
+innodb_buffer_pool_instances = 1
+innodb_log_file_size = 128M
+innodb_log_buffer_size = 16M
+innodb_flush_log_at_trx_commit = 2
+innodb_flush_method = O_DIRECT
+
+# Query Cache
+query_cache_type = 1
+query_cache_size = ${MYSQL_QUERY_CACHE_SIZE}
+query_cache_limit = 8M
+
+# Temporary Tables
+tmp_table_size = 64M
+max_heap_table_size = 64M
+
+# MyISAM Settings
+key_buffer_size = 32M
+myisam_recover_options = BACKUP,FORCE
+
+# Logging
+log_error = ${MYSQL_LOG_ERROR}
+slow_query_log = ${MYSQL_SLOW_QUERY_LOG}
+slow_query_log_file = /var/log/mysql/slow.log
+long_query_time = ${MYSQL_LONG_QUERY_TIME}
+log_queries_not_using_indexes = 0
+
+# Binary Logging (for replication)
+log_bin = /var/log/mysql/mysql-bin.log
+binlog_format = ROW
+expire_logs_days = 7
+max_binlog_size = 100M
+
+# InnoDB Settings
+innodb_file_per_table = 1
+innodb_open_files = 300
+innodb_io_capacity = 200
+innodb_io_capacity_max = 400
+
+# Security
+bind-address = 0.0.0.0
+skip-name-resolve
+
+# Performance Schema
+performance_schema = ON
+
+[mysql]
+default-character-set = utf8mb4
+
+[client]
+default-character-set = utf8mb4
+port = 3306
+socket = /var/run/mysqld/mysqld.sock

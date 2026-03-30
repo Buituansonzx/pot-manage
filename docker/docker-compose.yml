@@ -1,0 +1,196 @@
+services:
+  # PHP-FPM Service
+  php-fpm:
+    build:
+      context: ./php-fpm
+      dockerfile: Dockerfile
+      args:
+        - PHP_VERSION=${PHP_VERSION}
+        - CONTAINER_USER_ID=${CONTAINER_USER_ID}
+        - CONTAINER_GROUP_ID=${CONTAINER_GROUP_ID}
+        - CONTAINER_USER=${CONTAINER_USER}
+        - CONTAINER_GROUP=${CONTAINER_GROUP}
+        - COMPOSER_MEMORY_LIMIT=${COMPOSER_MEMORY_LIMIT}
+        - COMPOSER_PROCESS_TIMEOUT=${COMPOSER_PROCESS_TIMEOUT}
+        - COMPOSER_ALLOW_SUPERUSER=${COMPOSER_ALLOW_SUPERUSER}
+        - INSTALL_SUPERVISOR=${INSTALL_SUPERVISOR}
+    container_name: potmanage_php_fpm
+    restart: "no"
+    working_dir: ${APP_CODE_PATH_CONTAINER}
+    volumes:
+      - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
+      - ./php-fpm/php.ini.template:/usr/local/etc/php/php.ini.template
+      - ./php-fpm/www.conf.template:/usr/local/etc/php-fpm.d/www.conf.template
+      - ./php-fpm/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
+    environment:
+      - INSTALL_SUPERVISOR=${INSTALL_SUPERVISOR}
+      - PHP_MEMORY_LIMIT=${PHP_MEMORY_LIMIT}
+      - PHP_UPLOAD_MAX_FILESIZE=${PHP_UPLOAD_MAX_FILESIZE}
+      - PHP_POST_MAX_SIZE=2048M
+      - PHP_MAX_EXECUTION_TIME=600
+      - PHP_MAX_INPUT_VARS=${PHP_MAX_INPUT_VARS}
+      - PHP_OPCACHE_ENABLE=${PHP_OPCACHE_ENABLE}
+      - PHP_OPCACHE_MEMORY_CONSUMPTION=${PHP_OPCACHE_MEMORY_CONSUMPTION}
+      - PHP_OPCACHE_MAX_ACCELERATED_FILES=${PHP_OPCACHE_MAX_ACCELERATED_FILES}
+      - PHP_FPM_USER=${PHP_FPM_USER}
+      - PHP_FPM_GROUP=${PHP_FPM_GROUP}
+      - PHP_FPM_LISTEN=${PHP_FPM_LISTEN}
+      - PHP_FPM_PM=${PHP_FPM_PM}
+      - PHP_FPM_PM_MAX_CHILDREN=${PHP_FPM_PM_MAX_CHILDREN}
+      - PHP_FPM_PM_START_SERVERS=${PHP_FPM_PM_START_SERVERS}
+      - PHP_FPM_PM_MIN_SPARE_SERVERS=${PHP_FPM_PM_MIN_SPARE_SERVERS}
+      - PHP_FPM_PM_MAX_SPARE_SERVERS=${PHP_FPM_PM_MAX_SPARE_SERVERS}
+      - SUPERVISOR_LOG_LEVEL=${SUPERVISOR_LOG_LEVEL}
+      - SUPERVISOR_NODAEMON=${SUPERVISOR_NODAEMON}
+      - TZ=${TIMEZONE}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - potmanage_network
+
+  # Nginx Service
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+      args:
+        - NGINX_VERSION=${NGINX_VERSION}
+        - CONTAINER_USER_ID=${CONTAINER_USER_ID}
+        - CONTAINER_GROUP_ID=${CONTAINER_GROUP_ID}
+        - CONTAINER_USER=${CONTAINER_USER}
+        - CONTAINER_GROUP=${CONTAINER_GROUP}
+        - TIMEZONE=${TIMEZONE}
+        - NGINX_WORKER_PROCESSES=${NGINX_WORKER_PROCESSES}
+        - NGINX_WORKER_CONNECTIONS=${NGINX_WORKER_CONNECTIONS}
+        - NGINX_CLIENT_MAX_BODY_SIZE=${NGINX_CLIENT_MAX_BODY_SIZE}
+        - NGINX_KEEPALIVE_TIMEOUT=${NGINX_KEEPALIVE_TIMEOUT}
+        - NGINX_GZIP=${NGINX_GZIP}
+    container_name: potmanage_nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT}:80"
+    volumes:
+      - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
+      - ${NGINX_LOG_PATH}:/var/log/nginx
+    environment:
+      - PHP_FPM_LISTEN=${PHP_FPM_LISTEN}
+      - CONTAINER_USER=${CONTAINER_USER}
+      - CONTAINER_GROUP=${CONTAINER_GROUP}
+      - TZ=${TIMEZONE}
+      - NGINX_WORKER_PROCESSES=${NGINX_WORKER_PROCESSES}
+      - NGINX_WORKER_CONNECTIONS=${NGINX_WORKER_CONNECTIONS}
+      - NGINX_CLIENT_MAX_BODY_SIZE=${NGINX_CLIENT_MAX_BODY_SIZE}
+      - NGINX_KEEPALIVE_TIMEOUT=${NGINX_KEEPALIVE_TIMEOUT}
+      - NGINX_GZIP=${NGINX_GZIP}
+    depends_on:
+      - php-fpm
+    networks:
+      - potmanage_network
+
+  # MySQL Service
+  mysql:
+    build:
+      context: ./mysql
+      dockerfile: Dockerfile
+      args:
+        - MYSQL_VERSION=${MYSQL_VERSION}
+        - TIMEZONE=${TIMEZONE}
+        - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+        - MYSQL_DATABASE=${DB_DATABASE}
+        - MYSQL_USER=${DB_USERNAME}
+        - MYSQL_PASSWORD=${DB_PASSWORD}
+        - MYSQL_MAX_CONNECTIONS=${MYSQL_MAX_CONNECTIONS}
+        - MYSQL_INNODB_BUFFER_POOL_SIZE=${MYSQL_INNODB_BUFFER_POOL_SIZE}
+        - MYSQL_QUERY_CACHE_SIZE=${MYSQL_QUERY_CACHE_SIZE}
+        - MYSQL_LOG_ERROR=${MYSQL_LOG_ERROR}
+        - MYSQL_SLOW_QUERY_LOG=${MYSQL_SLOW_QUERY_LOG}
+        - MYSQL_LONG_QUERY_TIME=${MYSQL_LONG_QUERY_TIME}
+    container_name: potmanage_mysql
+    restart: unless-stopped
+    ports:
+      - "${MYSQL_PORT}:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=pot_manage_db
+      - MYSQL_USER=pot_manage_user
+      - MYSQL_PASSWORD=pot_manage_user
+      - TZ=${TIMEZONE}
+      - MYSQL_MAX_CONNECTIONS=${MYSQL_MAX_CONNECTIONS}
+      - MYSQL_INNODB_BUFFER_POOL_SIZE=${MYSQL_INNODB_BUFFER_POOL_SIZE}
+      - MYSQL_QUERY_CACHE_SIZE=${MYSQL_QUERY_CACHE_SIZE}
+      - MYSQL_LOG_ERROR=${MYSQL_LOG_ERROR}
+      - MYSQL_SLOW_QUERY_LOG=${MYSQL_SLOW_QUERY_LOG}
+      - MYSQL_LONG_QUERY_TIME=${MYSQL_LONG_QUERY_TIME}
+    volumes:
+      - ${MYSQL_DATA_PATH}:/var/lib/mysql
+      - ./mysql/init-scripts:/docker-entrypoint-initdb.d
+      - ./logs/mysql:/var/log/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - potmanage_network
+
+  # Redis Service
+  redis:
+    build:
+      context: ./redis
+      dockerfile: Dockerfile
+      args:
+        - REDIS_VERSION=${REDIS_VERSION}
+        - TIMEZONE=${TIMEZONE}
+        - REDIS_PORT=${REDIS_PORT}
+        - REDIS_PASSWORD=${REDIS_PASSWORD}
+        - REDIS_MAXMEMORY=${REDIS_MAXMEMORY}
+        - REDIS_MAXMEMORY_POLICY=${REDIS_MAXMEMORY_POLICY}
+        - REDIS_SAVE_INTERVAL=${REDIS_SAVE_INTERVAL}
+        - REDIS_LOG_LEVEL=${REDIS_LOG_LEVEL}
+        - REDIS_DATABASES=${REDIS_DATABASES}
+        - REDIS_TIMEOUT=${REDIS_TIMEOUT}
+    container_name: potmanage_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+      - ./logs/redis:/var/log/redis
+    environment:
+      - TZ=${TIMEZONE}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_MAXMEMORY=${REDIS_MAXMEMORY}
+      - REDIS_MAXMEMORY_POLICY=${REDIS_MAXMEMORY_POLICY}
+      - REDIS_SAVE_INTERVAL=${REDIS_SAVE_INTERVAL}
+      - REDIS_LOG_LEVEL=${REDIS_LOG_LEVEL}
+      - REDIS_DATABASES=${REDIS_DATABASES}
+      - REDIS_TIMEOUT=${REDIS_TIMEOUT}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - potmanage_network
+
+
+# Volumes
+volumes:
+  redis_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+# Networks
+networks:
+  potmanage_network:
+    driver: bridge

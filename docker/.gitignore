@@ -1,0 +1,46 @@
+# ─── Docker data và logs (runtime, không commit) ──────────────
+data/
+logs/
+
+# ─── MySQL data directory ─────────────────────────────────────
+mysql/data/
+mysql/dump.sql
+
+# ─── Redis data ───────────────────────────────────────────────
+redis/data/
+
+# ─── SSL / TLS certificates ───────────────────────────────────
+nginx/ssl/
+ssl/
+*.pem
+*.crt
+*.key
+!*.example.key
+
+# ─── Environment files ────────────────────────────────────────
+.env
+
+# ─── SQL dumps (không commit dump, chỉ giữ init scripts) ──────
+*.sql
+!mysql/init-scripts/*.sql
+
+# ─── OS generated files ───────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ─── IDE / Editor ─────────────────────────────────────────────
+.vscode/
+.idea/
+.nova/
+*.swp
+*.swo
+*~
+
+# ─── Temporary files ──────────────────────────────────────────
+*.tmp
+*.temp
