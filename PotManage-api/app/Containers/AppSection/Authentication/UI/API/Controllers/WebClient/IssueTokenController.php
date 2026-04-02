@@ -10,14 +10,27 @@ use App\Containers\AppSection\Authentication\Values\UserCredential;
 use App\Containers\AppSection\User\Models\User;
 use App\Ship\Parents\Controllers\ApiController;
 use Illuminate\Http\JsonResponse;
+use Exception;
 
 final class IssueTokenController extends ApiController
 {
     public function __invoke(IssueTokenRequest $request, IssueTokenAction $action): JsonResponse
     {
-        $result = $action->run(
-            UserCredential::createFrom($request),
-        );
+        try {
+            $result = $action->run(
+                UserCredential::createFrom($request),
+            );
+        } catch (Exception $e) {
+            if (str_contains($e->getMessage(), 'credentials were incorrect')) {
+                return response()->json([
+                    'message' => 'Email hoặc mật khẩu không chính xác.',
+                    'errors' => [
+                        'email' => ['Email hoặc mật khẩu không chính xác.']
+                    ]
+                ], 401);
+            }
+            throw $e;
+        }
 
         $user = User::with('roles')->where('email', $request->email)->first();
 

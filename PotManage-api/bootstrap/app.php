@@ -10,6 +10,7 @@ use App\Ship\Middleware\ValidateAppId;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 
 $basePath = dirname(__DIR__);
@@ -26,6 +27,7 @@ return Application::configure(basePath: $basePath)
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->use([
+            HandleCors::class,
             ValidateAppId::class,
         ]);
         $middleware->alias([
