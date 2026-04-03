@@ -100,9 +100,11 @@ const Header = ({ onOpenLogin, user, onLogout }) => {
                         ))
                       )}
                     </div>
-                    <button className="cart-create-new-btn">
-                      <Plus size={18} />
-                      TẠO GIỎ HÀNG MỚI
+                    <button 
+                      className="cart-create-new-btn"
+                      onClick={() => window.location.href = '/carts'}
+                    >
+                      XEM CHI TIẾT
                     </button>
                   </div>
                 )}

@@ -5,6 +5,7 @@ import LoginModal from './components/LoginModal';
 import Toast from './components/Toast';
 import { authService } from './services/authService';
 import ShopPage from './pages/ShopPage';
+import CartsPage from './pages/CartsPage';
 
 const HomeHero = () => (
   <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '6rem 3rem 0' }}>
@@ -77,7 +78,13 @@ function App() {
       <Header onOpenLogin={() => setIsLoginOpen(true)} user={user} onLogout={handleLogout} />
       
       <main style={{ paddingTop: '80px', minHeight: '80vh' }}>
-        {currentPath === '/shop' ? <ShopPage user={user} /> : <HomeHero />}
+        {currentPath === '/shop' ? (
+          <ShopPage user={user} />
+        ) : currentPath === '/carts' ? (
+          <CartsPage user={user} />
+        ) : (
+          <HomeHero />
+        )}
       </main>
 
       <Footer />

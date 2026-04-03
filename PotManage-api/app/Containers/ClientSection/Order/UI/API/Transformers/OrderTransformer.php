@@ -28,7 +28,7 @@ final class OrderTransformer extends ParentTransformer
 
     public function includeItems(Order $order)
     {
-        $order->loadMissing('items.product');
+        $order->loadMissing(['items.product.productImages', 'items.product.category']);
 
         if($order->items && $order->items->isNotEmpty()) {
             $itemArrays = $order->items->map(function ($item) {
@@ -36,10 +36,14 @@ final class OrderTransformer extends ParentTransformer
                     'id' => $item->id,
                     'product_id' => $item->product_id,
                     'product_name' => $item->product ? $item->product->name : null,
+                    'category_name' => $item->product && $item->product->category ? $item->product->category->name : null,
                     'quantity' => $item->quantity,
                     'price' => (float) $item->price,
                     'subtotal' => (float) $item->subtotal,
                     'note' => $item->note,
+                    'images' => $item->product && $item->product->productImages ? $item->product->productImages->map(function($img) {
+                        return ['image_url' => $img->image_url];
+                    })->toArray() : [],
                 ];
             })->toArray();
             return $this->primitive($itemArrays);
